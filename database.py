@@ -7,16 +7,28 @@ class Database:
     def __init__(self):
         self.client = boto3.client("dynamodb")
     
-    def get_db_entries(self, TableName, ProjecionExpression=None):
+    def get_db_entries(self, TableName, city, ProjecionExpression=None):
         try:
             if ProjecionExpression:
                 results = self.client.scan(
                     TableName=TableName,
-                    ProjectionExpression=ProjecionExpression
+                    FilterExpression="city = :val",
+                    ExpressionAttributeValues={
+                        ":val": {
+                            "S": city,
+                        },
+                    },    
+                    ProjectionExpression=ProjecionExpression,
                 )
             else:
                 results = self.client.scan(
-                    TableName=TableName
+                    TableName=TableName,
+                    FilterExpression="city = :val",
+                    ExpressionAttributeValues={
+                        ":val": {
+                            "S": city,
+                        },
+                    },    
                 )
             return results['Items']
         except ClientError as e:
