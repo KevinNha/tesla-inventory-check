@@ -28,6 +28,15 @@ SUBSCRIBED_CITIES = {
         'lng': -113.488731,
         'lat': 53.545055,
     },
+    "Calgary": {
+        'postal_code': 'T2P 1J9',
+        'region': 'AB',
+        'MODEL': 'm3',
+        'RANGE': 200,
+        'MARKET': 'CA',
+        'lng': -114.062019,
+        'lat': 51.044270,
+    },
     "Montreal": {
         'postal_code': 'H4N 1L4',
         'region': 'QC',
@@ -45,7 +54,17 @@ SUBSCRIBED_CITIES = {
         'MARKET': 'CA',
         'lng': -79.493130,
         'lat': 43.742560,
-    }
+    },
+    "Ottawa": {
+        'postal_code': 'K1N 9N4',
+        'region': 'ON',
+        'MODEL': 'm3',
+        'RANGE': 200,
+        'MARKET': 'CA',
+        'lng': -75.695000,
+        'lat': 45.424721,
+    },
+    
 }
 
 # result filters
@@ -67,7 +86,9 @@ EMAIL_RECEIVERS = {
     'Vancouver': ['hyunjinnha@gmail.com'],
     'Montreal': ['m.gariepy16@gmail.com'],
     'Edmonton': ['kellenrosentreter@gmail.com'],
-    'Toronto': ['histevee@gmail.com'],
+    'Calgary': ['m.gariepy16@gmail.com'],
+    'Toronto': ['histevee@gmail.com', 'Sir.gonga@gmail.com', 'searaghi@gmail.com'],
+    'Ottawa': ['Apexsoftware2019@gmail.com'],
     'Failure': ['hyunjinnha@gmail.com'],
 }
 CHARSET = 'UTF-8'
@@ -88,16 +109,19 @@ def main_function(city):
         new_car_data = get_car_data(city, "new")
         used_car_data = get_car_data(city, "used")
         car_inventory = new_car_data + used_car_data
+        car_inventory_vins = set(car.get("vin") for car in car_inventory)
+        
+        remove_existing_vins_from_db(car_inventory_vins, existing_cars_vins)
         if len(car_inventory) == 0:
             print("No new cars at the moment.")
+            return
         else:
-            car_inventory_vins = set(car.get("vin") for car in car_inventory)
-            
-            remove_existing_vins_from_db(car_inventory_vins, existing_cars_vins)
-
             # remove from car vins that exist already
             unsold_cars_vins = existing_cars_vins.intersection(car_inventory_vins)
             extract_new_vehciles_only(car_inventory, unsold_cars_vins)
+            if len(car_inventory) == 0:
+                print("No new cars at the moment.")
+                return
             print("new cars! " + str(len(car_inventory)))
 
             print("updating database...")
@@ -297,7 +321,7 @@ def send_fail_email():
         print("Email successfully sent")
 
 def build_body_text(city):
-    BODY_TEXT = "This is a TEST message using model S data to show how this bot will work."
+    BODY_TEXT = "New Tesla has been updated for your subscription. Here is the existing inventory."
     cars_in_db = db.get_db_entries(TableName=TABLE_NAME, city=city)
     for car in cars_in_db:
         message = (
@@ -314,4 +338,4 @@ def build_body_text(city):
         BODY_TEXT += message
     return BODY_TEXT
 
-lambda_handler(1, 1)
+lambda_handler(0, 0)
